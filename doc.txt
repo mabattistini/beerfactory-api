@@ -1,0 +1,72 @@
+
+http://flask.pocoo.org/docs/0.12/deploying/mod_wsgi/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<VirtualHost *:80>
+        <Directory /opt/app/solve/front-end>
+        AllowOverride All
+        </Directory>
+        DocumentRoot /opt/app/solve/
+        ServerName              units.artit.com.br
+        ServerAdmin             webmaster@artit.com.br
+        Redirect permanent /    https://units.artit.com.br/
+RewriteEngine on
+RewriteCond %{SERVER_NAME} =units.artit.com.br
+RewriteRule ^ https://%{SERVER_NAME}%{REQUEST_URI} [END,NE,R=permanent]
+</VirtualHost>
+
+
+<IfModule mod_ssl.c>
+        <VirtualHost _default_:443>
+                ServerAdmin webmaster@artit.com.br
+                ServerName units.artit.com.br
+
+                WSGIDaemonProcess runCPS.py user=www-data group=www-data threads=20
+                WSGIScriptAlias /  /opt/app/solve/front-end/units.wsgi
+
+
+                DocumentRoot /opt/app/solve/front-end
+                ErrorLog ${APACHE_LOG_DIR}/error.log
+                CustomLog ${APACHE_LOG_DIR}/access.log combined
+                SSLEngine on
+                SSLCertificateKeyFile /etc/letsencrypt/live/units.artit.com.br/privkey.pem
+                SSLCertificateFile /etc/letsencrypt/live/units.artit.com.br/cert.pem
+                #SSLCertificateChainFile /etc/apache2/ssl/units.artit.com.br.ca-bundle
+
+                <FilesMatch "\.(py|cgi|shtml|phtml|php)$">
+                                SSLOptions +StdEnvVars
+                </FilesMatch>
+                <Directory /opt/app/solve/front-end>
+                                SSLOptions +StdEnvVars
+                                WSGIProcessGroup runCPS.py
+                                WSGIApplicationGroup %{GLOBAL}
+                #               Order deny,allow
+                #               Allow from all
+                                   AllowOverride All
+                                Require all granted
+                </Directory>
+                BrowserMatch "MSIE [2-6]" \
+                                nokeepalive ssl-unclean-shutdown \
+                                downgrade-1.0 force-response-1.0
+                # MSIE 7 and newer should be able to use keepalive
+                BrowserMatch "MSIE [17-9]" ssl-unclean-shutdown
+
+SSLCertificateChainFile /etc/letsencrypt/live/units.artit.com.br/chain.pem
+        </VirtualHost>
+</IfModule>
+
+# vim: syntax=apache ts=4 sw=4 sts=4 sr noet
+
